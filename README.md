@@ -26,11 +26,11 @@ The experiments study fitting dimension, fitting radius, and observation noise i
 └── README.md
 ```
 
-The saved data and figures are included. To inspect the results, open the PDFs in `figures/`. To regenerate the plots, use the visualization scripts; rerunning the simulations is not required.
+The saved data and figures are included. To inspect the results, open the PDFs in `figures/`. To regenerate the plots, use the saved data; rerunning the simulations is not required.
 
 ## Setup
 
-Use R 4.1 or newer (the visualization scripts use the native `|>` pipe). RStudio is convenient for interactive plotting and viewing tables.
+Use R 4.1 or newer (the visualization scripts use the native `|>` pipe).
 
 Install the required packages once:
 
@@ -57,7 +57,7 @@ source("RKHS_Visualization.R")
 
 These scripts read the `.rds` files in `data/` and overwrite the corresponding PDFs in `figures/`.
 
-`RKHS_Visualization.R` also constructs `table_wide` and `table_display` for the noiseless RKHS results, including errors, ratios, and PTF constraint-activation probabilities. It opens these objects using `View()`. For a noninteractive or headless run, comment out the two `View()` calls or replace them with `print()` before running the script with `Rscript`.
+`RKHS_Visualization.R` also constructs `table_wide` and `table_display` for the noiseless RKHS results, including errors, ratios, and PTF constraint-activation probabilities. It opens these objects using `View()`. 
 
 | Experiment | Polynomial input (`data/Poly/`) | Polynomial output (`figures/Poly/`) |
 | --- | --- | --- |
@@ -97,7 +97,7 @@ source("Polynomial.R")
 source("RKHS.R")
 ```
 
-Each script runs all three experiment blocks at its end and saves new summaries to the corresponding `data/` folder, replacing the included `.rds` files. The full experiments involve many repeated constrained fits and can take substantial time. To try a smaller run, edit the experiment calls first: reduce `n_vec`, set a smaller `reps`, and set `n_cores` explicitly (for example, `n_cores = 2`).
+Each script runs all three experiment blocks at its end and saves new summaries to the corresponding `data/` folder, replacing the included `.rds` files. The full experiments involve many repeated constrained fits and can take substantial time. To try a smaller run, edit the experiment calls first: reduce `n_vec`, set a smaller `reps`, and set `n_cores` explicitly.
 
 The scripts parallelize settings using `foreach` and `doParallel`. With `n_cores = NULL`, they select the worker count automatically. They assign random-number streams to workers; reruns with different worker counts, software versions, or numerical environments need not reproduce the saved results exactly. Use the included summaries to recreate the displayed figures directly.
 
