@@ -27,6 +27,7 @@
 ##
 ## B' choices:
 ##   B
+##   1.1*B
 ##   sqrt(log n)
 ##   log(n)
 ##   sqrt(n)
@@ -101,10 +102,10 @@ compute_f_matrix <- function(theta, Phi) {
 ############################################################
 
 get_Bprime <- function(n, B, choice) {
-  
   switch(
     choice,
     B = B,
+    B_1p1 = 1.1 * B,
     sqrtlog = sqrt(log(n)),
     log = log(n),
     sqrtn =sqrt(n),
@@ -471,8 +472,8 @@ prepare_PTF <- function(
   
   upper_mat <- matrix(
     upper,
-    nrow = n,
-    ncol = ncol(Phi),
+    nrow = nrow(f_mat_noisy),
+    ncol = ncol(f_mat_noisy),
     byrow = TRUE
   )
   
@@ -549,14 +550,6 @@ privatize_PTF <- function(
 
 ############################################################
 ##### PTF WLS design
-############################################################
-##
-## The WLS weights have the form
-##
-##   1 / sigma_j^2
-##
-## and the common scalar does not affect the WLS point
-## estimate.
 ############################################################
 
 prepare_PTF_WLS <- function(
@@ -717,24 +710,7 @@ compute_IVar_PTF <- function(
       Phi,
       w_shape * Phi
     )
-  
-  ##########################################################
-  ## Full WLS weights:
-  ##
-  ## w_j =
-  ## n^2 mu^2 /
-  ## (4 B'^2 T)
-  ## * 1 / ||phi(t_j)||^2
-  ##
-  ## Hence
-  ##
-  ## Cov(theta)
-  ## =
-  ## 4 B'^2 T /
-  ## (n^2 mu^2)
-  ## * (XtWX_shape)^(-1)
-  ##########################################################
-  
+
   scale_cov <-
     4 * Bprime^2 * T /
     (n^2 * mu^2)
@@ -913,16 +889,6 @@ run_one_setting <- function(
       A2_fit$was_constrained
   }
   
-  
-  ##########################################################
-  ## Theoretical DP-only variance
-  ##
-  ## These depend only on:
-  ## B', n, mu, T, Phi
-  ##
-  ## They do not need MC averaging.
-  ##########################################################
-  
   IVar_FTP <- compute_IVar_FTP(
     Bprime = Bprime,
     n = n,
@@ -1068,6 +1034,7 @@ run_simulation <- function(
     Bprime_choices =
       c(
         "B",
+        "B_1p1",
         "sqrtlog",
         "log",
         "sqrtn",
@@ -1410,99 +1377,55 @@ run_simulation <- function(
 
 
 ############################################################
-##### Run simulation
+##### Run simulations
 ############################################################
-
-tbl_all <- run_simulation(
-  n_vec = 2^(2:11),
-  mu_vec = c(1),
-  m_vec = c(2, 3, 4, 5, 6, 8, 10),
-  Bprime_choices = c("sqrtlog"),
-  T = c(20),
-  B = c(1),
-  mu0 = NULL,
-  sigma_obs = c(0),
-  reps = 5000,
-  seed = 12345
-)
 
 ##### Simulation 1 for Noiseless
-
-#tbl_all <- run_simulation(
-#  n_vec = c(5, 6, 7, 8, 9, 10, 15, 20, 30), mu = 1
-#  n_vec = c(50, 60, 70, 80, 90, 100, 150, 200, 300), mu = 0.1
-#  m_vec = c(2, 3, 4, 5, 6, 8, 10),
-#  Bprime_choices = c("log"),
-#  T = c(20),
-#  B = c(1),
-#  mu0 = NULL,
-#  sigma_obs = c(0),
-#  reps = 5000,
-#  seed = 12345
-#)
+poly_noiseless <- run_simulation(
+  n_vec = 2^(2:12),
+  mu_vec = c(0.1, 1),
+  m_vec = c(2, 4, 6, 8),
+  Bprime_choices = c("B_1p1"),
+  T_vec = c(20),
+  B_vec = c(1),
+  mu0 = NULL,
+  sigma_obs_vec = c(0),
+  reps = 1000,
+  n_cores = NULL,
+  seed = 42
+)
 
 ##### Simulation 2 for B' choices
-# tbl_all <- run_simulation(
-#   n_vec = c(4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048),
-#   mu_vec = c(1),
-#   m_vec = c(4),
-#   Bprime_choices = c("B", "sqrtlog", "log", "sqrtn", "n_2_3"),
-#   T = c(20),
-#   B = c(1),
-#   mu0 = NULL,
-#   sigma_obs = c(1),
-#   reps = 5000,
-#   seed = 12345
-# )
+poly_Bprime <- run_simulation(
+  n_vec = 2^(2:12),
+  mu_vec = c(1),
+  m_vec = c(4),
+  Bprime_choices = c("B", "sqrtlog", "log", "sqrtn", "n_2_3"),
+  T_vec = c(20),
+  B_vec = c(1),
+  mu0 = NULL,
+  sigma_obs_vec = c(1),
+  reps = 1000,
+  n_cores = NULL,
+  seed = 42
+)
 
 ##### Simulation 3 for Noisy Level
-#tbl_all <- run_simulation(
-#  n_vec = c(4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048),
-#  mu_vec = c(1),
-#  m_vec = c(2, 3, 4, 5, 6, 8, 10),
-#  Bprime_choices = c("log"),
-#  T = c(20),
-#  B = c(1),
-#  mu0 = NULL,
-#  sigma_obs = c(0.01, 1, 100),
-#  reps = 5000,
-#  seed = 12345
-#)
-
-############################################################
-##### Sort results
-############################################################
-
-tbl_all <-
-  tbl_all[
-    order(
-      tbl_all$n,
-      tbl_all$m,
-      tbl_all$T,
-      tbl_all$B,
-      tbl_all$sigma_obs,
-      tbl_all$mu,
-      match(
-        tbl_all$Bprime_choice,
-        c(
-          "B",
-          "sqrtlog",
-          "log",
-          "sqrtn",
-          "n_2_3"
-        )
-      )
-    ),
-  ]
-
-rownames(tbl_all) <- NULL
-
-############################################################
-##### Save
-############################################################
-
-saveRDS(
-  tbl_all,
-  file =
-    "Poly_sigma0_0_mu_1_n_4-2048.rds"
+poly_noisy <- run_simulation(
+  n_vec = 2^(2:12),
+  mu_vec = c(1),
+  m_vec = c(2, 4, 6, 8),
+  Bprime_choices = c("sqrtlog"),
+  T_vec = c(20),
+  B_vec = c(1),
+  mu0 = NULL,
+  sigma_obs_vec = c(0.1, 1, 10),
+  reps = 1000,
+  n_cores = NULL,
+  seed = 42
 )
+
+# Save Results
+saveRDS(poly_noiseless, file ="data/Poly/Poly_sigma0_0_B1p1.rds")
+saveRDS(poly_Bprime, file ="data/Poly/Poly_Bprime.rds")
+saveRDS(poly_noisy, file ="data/Poly/Poly_noisy_sqrtlog.rds")

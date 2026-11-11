@@ -1,4 +1,4 @@
-############################## RKHS Gaussian Kernel Case #################################
+############################## RBF Kernel Case #################################
 
 library("doParallel")
 library("foreach")
@@ -17,6 +17,7 @@ get_Bprime <- function(n, B, choice) {
   switch(
     choice,
     B = B,
+    B_1p1 = 1.1 * B,
     sqrtlog = sqrt(log(n)),
     log = log(n),
     sqrtn = sqrt(n),
@@ -864,7 +865,7 @@ run_simulation_rkhs <- function(
   B_vec = c(0.5, 1, 2),
   
   Bprime_choices = c(
-    "B", "sqrtlog", "log", "sqrtn", "n_2_3"
+    "B", "B_1p1", "sqrtlog", "log", "sqrtn", "n_2_3"
   ),
   
   sigma_0_vec = c(0, 0.1, 1),
@@ -1199,7 +1200,7 @@ run_simulation_rkhs <- function(
       results$mu,
       match(
         results$Bprime_choice,
-        c("B", "sqrtlog", "log", "sqrtn", "n_2_3")
+        c("B", "B_1p1", "sqrtlog", "log", "sqrtn", "n_2_3")
       )
     ),
   ]
@@ -1211,93 +1212,62 @@ run_simulation_rkhs <- function(
   results
 }
 
-##### Simulation 1 for Noiseless
+############################################################
+##### Run simulations
+############################################################
 
-#tbl_all <- run_simulation(
-# n_vec = 2^(1:9),
-# mu_vec = c(0.1, 1),
-# T_pts_vec = c(2, 3, 4, 5, 6, 8, 10),
-# M_vec = c(20),
-# B_vec = c(1),
-# Bprime_choices = c("sqrtlog"),
-# sigma_0_vec = c(0),
-# sigma_kernel_vec = c(0.2),
-# lambda_min_vec = c(1e-8),
-# mu0 = NULL,
-# reps = 5000,
-# n_cores = NULL,
-# seed = 12345
-#)
+##### Simulation 1 for Noiseless
+rkhs_noiseless <- run_simulation_rkhs(
+n_vec = 2^(2:12),
+mu_vec = c(0.1, 1),
+T_pts_vec = c(2, 4, 6, 8),
+M_vec = c(20),
+B_vec = c(1),
+Bprime_choices = c("B_1p1"),
+sigma_0_vec = c(0),
+sigma_kernel_vec = c(0.2),
+lambda_min_vec = c(1e-8),
+mu0 = NULL,
+reps = 1000,
+n_cores = NULL,
+seed = 42
+)
 
 ##### Simulation 2 for B' choices
-# tbl_all <- run_simulation(
-# n_vec = 2^(2:11),
-# mu_vec = c(1),
-# T_pts_vec = c(4),
-# M_vec = c(20),
-# B_vec = c(1),
-# Bprime_choices = c("B", "sqrtlog", "log", "sqrtn", "n_2_3"),
-# sigma_0_vec = c(1),
-# sigma_kernel_vec = c(0.2),
-# lambda_min_vec = c(1e-8),
-# mu0 = NULL,
-# reps = 5000,
-# n_cores = NULL,
-# seed = 12345
-# )
+rkhs_Bprime <- run_simulation_rkhs(
+n_vec = 2^(2:12),
+mu_vec = c(1),
+T_pts_vec = c(4),
+M_vec = c(20),
+B_vec = c(1),
+Bprime_choices = c("B", "sqrtlog", "log", "sqrtn", "n_2_3"),
+sigma_0_vec = c(1),
+sigma_kernel_vec = c(0.2),
+lambda_min_vec = c(1e-8),
+mu0 = NULL,
+reps = 1000,
+n_cores = NULL,
+seed = 42
+)
 
-##### Simulation 3 for Noisy Level
-#tbl_all <- run_simulation(
-# n_vec = 2^(2:11),
-# mu_vec = c(1),
-# T_pts_vec = c(2, 3, 4, 5, 6, 8, 10),
-# M_vec = c(20),
-# B_vec = c(1),
-# Bprime_choices = c("sqrtlog"),
-# sigma_0_vec = c(0.01, 1, 100),
-# sigma_kernel_vec = c(0.2),
-# lambda_min_vec = c(1e-8),
-# mu0 = NULL,
-# reps = 5000,
-# n_cores = NULL,
-# seed = 12345
-#)
-
-#### Run RKHS simulation ####
-tbl_all <- run_simulation_rkhs(
-  n_vec = 2^(2:11),
+#### Simulation 3 for Noisy Level ####
+rkhs_noisy <- run_simulation_rkhs(
+  n_vec = 2^(2:12),
   mu_vec = c(1),
-  T_pts_vec = c(2, 3, 4, 5, 6, 8, 10),
+  T_pts_vec = c(2, 4, 6, 8),
   M_vec = c(20),
   B_vec = c(1),
   Bprime_choices = c("log"),
-  sigma_0_vec = c(0),
+  sigma_0_vec = c(0.1, 1, 10),
   sigma_kernel_vec = c(0.2),
   lambda_min_vec = c(1e-8),
   mu0 = NULL,
-  reps = 5000,
+  reps = 1000,
   n_cores = NULL,
-  seed = 12345
+  seed = 42
 )
 
-tbl_all <- tbl_all[
-  order(
-    tbl_all$n,
-    tbl_all$M,
-    tbl_all$T_pts,
-    tbl_all$B,
-    tbl_all$sigma_0,
-    tbl_all$sigma_kernel,
-    tbl_all$lambda_min,
-    tbl_all$mu,
-    match(
-      tbl_all$Bprime_choice,
-      c("B", "sqrtlog", "log", "sqrtn", "n_2_3")
-    )
-  ),
-]
-
-rownames(tbl_all) <- NULL
-
-# Save it
-saveRDS(tbl_all, file = "RKHS_sigma0_0_mu_1_n_4-2048.rds")
+# Save Results
+saveRDS(rkhs_noiseless, file = "data/RKHS/RKHS_sigma0_0_B1p1.rds")
+saveRDS(rkhs_Bprime, file = "data/RKHS/RKHS_Bprime.rds")
+saveRDS(rkhs_noisy, file = "data/RKHS/RKHS_noisy.rds")
