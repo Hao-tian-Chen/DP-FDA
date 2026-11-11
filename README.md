@@ -1,6 +1,6 @@
 # DP-FDA: Privacy and Smoothing in Functional Mean Estimation
 
-Simulation code and results accompanying **On the Order of Privacy and Smoothing in Functional Mean Estimation**, by Haotian Chen, Yu-Wei Chen, Qifan Song, and Jordan Awan.
+Simulation code and results accompanying [**On the Order of Privacy and Smoothing in Functional Mean Estimation**](https://arxiv.org/abs/2611.09799), by Haotian Chen, Yu-Wei Chen, Qifan Song, and Jordan Awan.
 
 The project compares two procedures for functional mean estimation under a common Gaussian differential privacy (GDP) budget:
 
